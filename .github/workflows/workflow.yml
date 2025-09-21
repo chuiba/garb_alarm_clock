@@ -3,11 +3,15 @@ name: Build and Publish
 on:
   release:
     types: [published]
+  push:
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build-windows-exe:
     name: Build Windows Executable
     runs-on: windows-latest
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -40,6 +44,7 @@ jobs:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     environment: pypi
+    if: github.event_name == 'release'
     permissions:
       id-token: write
     steps:
