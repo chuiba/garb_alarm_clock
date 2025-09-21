@@ -2,7 +2,7 @@
 
 __author__ = """chuiba"""
 __email__ = 'chuibachuibachuiba@163.com'
-__version__ = '0.1.11'
+__version__ = '0.1.12'
 
 # -*- coding: utf-8 -*-
 #from designer.MainWindow import Ui_MainWindow
@@ -30,50 +30,6 @@ def get_image(url):
     photo.loadFromData(res.content)
     return photo
 
-def refresh_garb_number():
-    item_id = components.item_id.text()
-    name, image, avatar, surplus, quantity, number = garb.get_garb_info(item_id)
-
-    components.number.setText(number)
-    components.cur_date.setText(get_time())
-
-def refresh_info():
-    # 更新界面显示
-    item_id = components.item_id.text()
-    name, image, avatar, surplus, quantity, number = garb.get_garb_info(item_id)
-
-    components.garb_name.setText(name)
-    components.avator.setPixmap(get_image(avatar))
-    components.avator.setScaledContents(True)
-    components.number.setText(number)
-    components.cur_date.setText(get_time())
-    palette = QPalette()
-    pix = get_image(image)
-    pix = pix.scaled(mainwindow.width(), mainwindow.height())
-    palette.setBrush(QPalette.Background, QBrush(pix))
-    mainwindow.setPalette(palette)
-
-def button_click(self):
-    refresh_info()
-    if (int(components.interval.text()) < 60):
-        # 为了防止访问频率过高被封，所以默认限制为每分钟访问一次
-        components.default_interval = 60
-    else:
-        components.default_interval = int(components.interval.text())
-
-    mainwindow.timer.start(1000)
-
-def on_timer():
-    interval = int(components.interval.text())
-    if (interval > 0):
-        interval = interval - 1
-    else:
-        refresh_garb_number()
-        interval = components.default_interval
-
-    components.interval.setText(str(interval))
-    components.cur_date.setText(get_time())
-
 def main():
     print("hello garb")
 
@@ -83,6 +39,51 @@ def start_gui():
     mainwindow = QMainWindow()
     components = Ui_MainWindow()
     components.setupUi(mainwindow)
+
+    def refresh_garb_number():
+        item_id = components.item_id.text()
+        name, image, avatar, surplus, quantity, number = garb.get_garb_info(item_id)
+
+        components.number.setText(number)
+        components.cur_date.setText(get_time())
+
+    def refresh_info():
+        # 更新界面显示
+        item_id = components.item_id.text()
+        name, image, avatar, surplus, quantity, number = garb.get_garb_info(item_id)
+
+        components.garb_name.setText(name)
+        components.avator.setPixmap(get_image(avatar))
+        components.avator.setScaledContents(True)
+        components.number.setText(number)
+        components.cur_date.setText(get_time())
+        palette = QPalette()
+        pix = get_image(image)
+        pix = pix.scaled(mainwindow.width(), mainwindow.height())
+        palette.setBrush(QPalette.Background, QBrush(pix))
+        mainwindow.setPalette(palette)
+
+    def button_click():
+        refresh_info()
+        if (int(components.interval.text()) < 60):
+            # 为了防止访问频率过高被封，所以默认限制为每分钟访问一次
+            components.default_interval = 60
+        else:
+            components.default_interval = int(components.interval.text())
+
+        mainwindow.timer.start(1000)
+
+    def on_timer():
+        interval = int(components.interval.text())
+        if (interval > 0):
+            interval = interval - 1
+        else:
+            refresh_garb_number()
+            interval = components.default_interval
+
+        components.interval.setText(str(interval))
+        components.cur_date.setText(get_time())
+
     components.pushButton.clicked.connect(button_click)
 
     # 默认设置一个
