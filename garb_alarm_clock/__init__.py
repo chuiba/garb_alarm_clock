@@ -77,23 +77,27 @@ def on_timer():
 def main():
     print("hello garb")
 
-# 主程序
-app = QApplication(sys.argv)
-mainwindow = QMainWindow()
-components = Ui_MainWindow()
-components.setupUi(mainwindow)
-components.pushButton.clicked.connect(button_click)
+def start_gui():
+    # 主程序
+    app = QApplication(sys.argv)
+    mainwindow = QMainWindow()
+    components = Ui_MainWindow()
+    components.setupUi(mainwindow)
+    components.pushButton.clicked.connect(button_click)
 
-# 默认设置一个
-components.item_id.setText("4389")
-components.default_interval = 60
+    # 默认设置一个
+    components.item_id.setText("4389")
+    components.default_interval = 60
 
-# 刷新信息
-refresh_info()
+    # 刷新信息
+    refresh_info()
 
-mainwindow.timer = QTimer(mainwindow)
-mainwindow.timer.timeout.connect(on_timer)
+    mainwindow.timer = QTimer(mainwindow)
+    mainwindow.timer.timeout.connect(on_timer)
 
-# 显示
-mainwindow.show()
-sys.exit(app.exec_())
+    # 显示
+    mainwindow.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    start_gui()
