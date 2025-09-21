@@ -10,12 +10,15 @@ from pathlib import Path
 
 def main():
     """Build the executable using PyInstaller."""
-    project_root = Path(__file__).parent
+    project_root = Path(os.getcwd())
     spec_file = project_root / "garb_alarm_clock.spec"
     dist_dir = project_root / "dist"
     build_dir = project_root / "build"
 
     print("Building Windows executable...")
+    print(f"Project root: {project_root}")
+    print(f"Spec file: {spec_file}")
+    print(f"Spec file exists: {spec_file.exists()}")
 
     # Clean previous builds
     if dist_dir.exists():
@@ -25,6 +28,14 @@ def main():
     if build_dir.exists():
         shutil.rmtree(build_dir)
         print("Cleaned build directory")
+
+    # Check if spec file exists
+    if not spec_file.exists():
+        print(f"Error: Spec file not found at {spec_file}")
+        print("Available files:")
+        for f in project_root.iterdir():
+            print(f"  {f}")
+        return 1
 
     # Run PyInstaller
     cmd = [sys.executable, "-m", "PyInstaller", str(spec_file), "--clean"]
