@@ -1,13 +1,17 @@
-"""Top-level package for garb-alarm-clock."""
+﻿"""Top-level package for garb-alarm-clock."""
 
 __author__ = """chuiba"""
 __email__ = 'chuibachuibachuiba@163.com'
-__version__ = '0.1.0'
+__version__ = '0.1.4'
 
 # -*- coding: utf-8 -*-
 #from designer.MainWindow import Ui_MainWindow
-from .MainWindow import Ui_MainWindow
-from . import garb
+try:
+    from .MainWindow import Ui_MainWindow
+    from . import garb
+except ImportError:
+    from MainWindow import Ui_MainWindow
+    import garb
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QPixmap, QPalette, QBrush
@@ -71,26 +75,25 @@ def on_timer():
     components.cur_date.setText(get_time())
 
 def main():
-    components.setupUi(mainwindow)
-    components.pushButton.clicked.connect(button_click)
+    print("hello garb")
 
-    # 默认设置一个
-    components.item_id.setText("4389")
-    components.default_interval = 60
-
-    # 刷新信息
-    refresh_info()
-
-    mainwindow.timer = QTimer(mainwindow)
-    mainwindow.timer.timeout.connect(on_timer)
-
-    # 显示
-    mainwindow.show()
-    sys.exit(app.exec_())
-
+# 主程序
 app = QApplication(sys.argv)
 mainwindow = QMainWindow()
 components = Ui_MainWindow()
+components.setupUi(mainwindow)
+components.pushButton.clicked.connect(button_click)
 
-if __name__ == '__main__':
-   main()
+# 默认设置一个
+components.item_id.setText("4389")
+components.default_interval = 60
+
+# 刷新信息
+refresh_info()
+
+mainwindow.timer = QTimer(mainwindow)
+mainwindow.timer.timeout.connect(on_timer)
+
+# 显示
+mainwindow.show()
+sys.exit(app.exec_())
