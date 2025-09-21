@@ -63,16 +63,16 @@ jobs:
       run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.tag }}
-        release_name: ${{ steps.tag.outputs.tag }}
+        name: ${{ steps.tag.outputs.tag }}
         draft: false
         prerelease: false
+        files: ./dist/garb_alarm_clock.exe
         body: |
           ## Release ${{ steps.tag.outputs.tag }}
 
@@ -82,13 +82,3 @@ jobs:
 
           ### 🔄 Changes
           See commit history for detailed changes in this release.
-
-    - name: Upload Windows Executable
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/garb_alarm_clock.exe
-        asset_name: garb_alarm_clock_windows_x64.exe
-        asset_content_type: application/octet-stream
