@@ -9,3 +9,4 @@ Sphinx==1.8.5
 twine==1.14.0
 Click==7.0
 PyQt5==5.15.4
+pyinstaller>=5.0
