@@ -2,7 +2,7 @@
 
 __author__ = """chuiba"""
 __email__ = 'chuibachuibachuiba@163.com'
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 # -*- coding: utf-8 -*-
 #from designer.MainWindow import Ui_MainWindow
