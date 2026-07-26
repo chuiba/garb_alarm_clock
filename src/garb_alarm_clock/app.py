@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime
+from functools import partial
 
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QTimer, Signal, Slot
 from PySide6.QtGui import QBrush, QFont, QPalette, QPixmap
@@ -38,19 +39,22 @@ class _WorkerSignals(QObject):
 class _FetchWorker(QRunnable):
     """在线程池中拉取装扮信息与图片，避免阻塞界面。"""
 
-    def __init__(self, client: GarbClient, item_id: str, with_images: bool) -> None:
+    def __init__(
+        self, client: GarbClient, item_id: str, with_images: bool, generation: int
+    ) -> None:
         super().__init__()
         self.signals = _WorkerSignals()
+        self.item_id = item_id
+        self.with_images = with_images
+        self.generation = generation
         self._client = client
-        self._item_id = item_id
-        self._with_images = with_images
 
     @Slot()
     def run(self) -> None:
         try:
-            info = self._client.fetch_info(self._item_id)
+            info = self._client.fetch_info(self.item_id)
             avatar = background = None
-            if self._with_images:
+            if self.with_images:
                 if info.avatar_url:
                     avatar = self._client.fetch_image(info.avatar_url)
                 if info.image_url:
@@ -73,6 +77,9 @@ class MainWindow(QMainWindow):
         self._running = False
         self._countdown = 0
         self._alarm_fired = False
+        # 每次开始/停止都会递增，用于丢弃上一轮监控中在途请求的过期结果
+        self._generation = 0
+        self._images_loaded = False
 
         self._timer = QTimer(self)
         self._timer.setInterval(1000)
@@ -188,6 +195,9 @@ class MainWindow(QMainWindow):
         if not item_id:
             self.statusBar().showMessage("请先填写装扮编号")
             return
+        self._generation += 1
+        self._worker = None
+        self._images_loaded = False
         self._running = True
         self._alarm_fired = False
         self._countdown = self.interval_spin.value()
@@ -197,6 +207,8 @@ class MainWindow(QMainWindow):
         self._timer.start()
 
     def _stop_monitoring(self) -> None:
+        self._generation += 1  # 在途请求的结果一律丢弃
+        self._worker = None
         self._running = False
         self._timer.stop()
         self.start_button.setText("开始")
@@ -211,34 +223,41 @@ class MainWindow(QMainWindow):
         self._countdown -= 1
         if self._countdown <= 0:
             self._countdown = self.interval_spin.value()
-            self._schedule_fetch(with_images=False)
+            # 首次含图请求失败过就继续补拉图片，直到成功一次为止
+            self._schedule_fetch(with_images=not self._images_loaded)
         self.countdown_label.setText(f"{self._countdown} 秒后")
 
     # ------------------------------------------------------------- 数据获取
 
     def _schedule_fetch(self, *, with_images: bool) -> None:
         if self._worker is not None:
-            return  # 上一次请求还没结束，跳过本轮
+            return  # 本轮已有请求在途，跳过
         item_id = self.item_id_edit.text().strip()
-        worker = _FetchWorker(self._client, item_id, with_images)
-        worker.signals.finished.connect(self._on_fetch_finished)
-        worker.signals.failed.connect(self._on_fetch_failed)
+        worker = _FetchWorker(self._client, item_id, with_images, self._generation)
+        worker.signals.finished.connect(partial(self._on_fetch_finished, worker))
+        worker.signals.failed.connect(partial(self._on_fetch_failed, worker))
         self._worker = worker
         self.statusBar().showMessage("正在刷新…")
         self._pool.start(worker)
 
-    @Slot(object)
-    def _on_fetch_finished(self, result: object) -> None:
-        self._worker = None
+    def _on_fetch_finished(self, worker: _FetchWorker, result: object) -> None:
+        if worker is self._worker:
+            self._worker = None
+        if worker.generation != self._generation:
+            return  # 停止或重启前发出的过期请求，结果丢弃
         info, avatar, background = result
+        if worker.with_images:
+            self._images_loaded = True
         self._apply_info(info)
         self._apply_images(avatar, background)
         self.statusBar().showMessage("刷新成功")
         self._check_alarm(info.fan_number)
 
-    @Slot(str)
-    def _on_fetch_failed(self, message: str) -> None:
-        self._worker = None
+    def _on_fetch_failed(self, worker: _FetchWorker, message: str) -> None:
+        if worker is self._worker:
+            self._worker = None
+        if worker.generation != self._generation:
+            return
         self.statusBar().showMessage(f"刷新失败：{message}")
 
     def _apply_info(self, info: GarbInfo) -> None:
@@ -305,8 +324,11 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._timer.stop()
-        self._pool.waitForDone(3000)
+        self._generation += 1
+        # 先关闭 HTTP 客户端，让在途请求尽快失败；等待时间以单次读超时为上限，
+        # 避免线程池析构时无限期阻塞进程退出
         self._client.close()
+        self._pool.waitForDone(-1)
         super().closeEvent(event)
 
 

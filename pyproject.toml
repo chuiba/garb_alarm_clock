@@ -39,7 +39,7 @@ garb-alarm-clock = "garb_alarm_clock.app:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
+    "pytest>=8.2",
     "ruff>=0.8",
 ]
 
