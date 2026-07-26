@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags like v1.0.0, v0.1.7, etc.
+      - 'v*'  # v1.0.0 之类的版本标签触发
 
 jobs:
   build-and-publish:
@@ -15,24 +15,16 @@ jobs:
       contents: read
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
+      - name: Build package
+        run: uv build
 
-    - name: Build package
-      run: python -m build
-
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
   build-windows-exe:
     name: Build Windows Executable
@@ -41,44 +33,35 @@ jobs:
       contents: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+      - name: Build executable
+        run: uv run --with pyinstaller pyinstaller garb_alarm_clock.spec --clean
 
-    - name: Build executable
-      run: python build_exe.py
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        shell: bash
 
-    - name: Get tag name
-      id: tag
-      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      shell: bash
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: false
+          files: ./dist/garb_alarm_clock.exe
+          body: |
+            ## Release ${{ steps.tag.outputs.tag }}
 
-    - name: Create Release and Upload Assets
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.tag.outputs.tag }}
-        name: ${{ steps.tag.outputs.tag }}
-        draft: false
-        prerelease: false
-        files: ./dist/garb_alarm_clock.exe
-        body: |
-          ## Release ${{ steps.tag.outputs.tag }}
+            ### 📥 下载
+            - **Python 包**：`pip install garb-alarm-clock`
+            - **Windows 可执行文件**：下载下方的 `garb_alarm_clock.exe`
 
-          ### 📥 Downloads
-          - **Python Package**: `pip install garb-alarm-clock==${{ steps.tag.outputs.tag }}`
-          - **Windows Executable**: Download `garb_alarm_clock_windows_x64.exe` below
-
-          ### 🔄 Changes
-          See commit history for detailed changes in this release.
+            ### 🔄 变更
+            详见 [CHANGELOG.md](https://github.com/chuiba/garb_alarm_clock/blob/master/CHANGELOG.md)。
