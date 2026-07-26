@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "garb-alarm-clock"
+version = "1.0.0"
+description = "B 站装扮粉丝编号小闹钟：定时刷新装扮信息，到达目标编号时提醒"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "chuiba", email = "chuibachuibachuiba@163.com" }]
+requires-python = ">=3.10"
+keywords = ["bilibili", "garb", "alarm", "pyside6", "qt"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: Chinese (Simplified)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "httpx>=0.27",
+    "PySide6>=6.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/chuiba/garb_alarm_clock"
+Repository = "https://github.com/chuiba/garb_alarm_clock"
+Changelog = "https://github.com/chuiba/garb_alarm_clock/blob/master/CHANGELOG.md"
+
+[project.gui-scripts]
+garb-alarm-clock = "garb_alarm_clock.app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/garb_alarm_clock"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# 中文文案使用全角标点是正确的，关闭“ambiguous unicode”检查
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

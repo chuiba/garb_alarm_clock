@@ -1,26 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-
-import sys
-import os
-from pathlib import Path
-
-# Get the project root directory
-project_root = Path(os.getcwd())
+# PyInstaller 打包配置：pyinstaller garb_alarm_clock.spec --clean
 
 a = Analysis(
-    ['main.py'],
-    pathex=[str(project_root)],
+    ['src/garb_alarm_clock/__main__.py'],
+    pathex=['src'],
     binaries=[],
     datas=[],
-    hiddenimports=[
-        'PyQt5.QtCore',
-        'PyQt5.QtGui',
-        'PyQt5.QtWidgets',
-        'requests',
-        'garb_alarm_clock',
-        'garb_alarm_clock.garb',
-        'garb_alarm_clock.MainWindow'
-    ],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -43,11 +29,11 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # Set to False for GUI application
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # Add .ico file path here if you have an icon
+    icon=None,
 )
